@@ -30,6 +30,7 @@ namespace FFTWSharp_test
         // n: Logical size of the transform
         public FFTWtest(int n)
         {
+            System.Console.WriteLine("Starting test with n = " + n + " complex numbers");
             fftLength = n;
 
             // create two unmanaged arrays, properly aligned
@@ -142,6 +143,8 @@ namespace FFTWSharp_test
             fftwf.destroy_plan(fplan1);
             fftwf.destroy_plan(fplan2);
             fftwf.destroy_plan(fplan3);
+            fftwf.destroy_plan(fplan4);
+            fftwf.destroy_plan(fplan5);
             hin.Free();
             hout.Free();
         }
