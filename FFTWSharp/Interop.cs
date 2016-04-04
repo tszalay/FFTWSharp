@@ -461,7 +461,28 @@ namespace FFTWSharp
              ExactSpelling = true,
              CallingConvention = CallingConvention.Cdecl)]
 		public static extern void print_plan(IntPtr plan);
-	}
+
+        /// <summary>
+        /// Exports the accumulated Wisdom to the provided filename
+        /// </summary>
+        /// <param name="filename">The target filename</param>
+        [DllImport("libfftw3f-3.dll",
+             EntryPoint = "fftwf_export_wisdom_to_filename",
+             ExactSpelling = true,
+             CallingConvention = CallingConvention.Cdecl)]
+        public static extern void export_wisdom_to_filename(string filename);
+
+
+        /// <summary>
+        /// Imports Wisdom from provided filename
+        /// </summary>
+        /// <param name="filename">The filename to read from</param>
+        [DllImport("libfftw3f-3.dll",
+             EntryPoint = "fftwf_import_wisdom_from_filename",
+             ExactSpelling = true,
+             CallingConvention = CallingConvention.Cdecl)]
+        public static extern void import_wisdom_from_filename(string filename);
+    }
 	#endregion
 
 	#region Double Precision
@@ -808,6 +829,27 @@ namespace FFTWSharp
              ExactSpelling = true,
              CallingConvention = CallingConvention.Cdecl)]
 		public static extern void print_plan(IntPtr plan);
-	}
+
+        /// <summary>
+        /// Exports the accumulated Wisdom to the provided filename
+        /// </summary>
+        /// <param name="filename">The target filename</param>
+        [DllImport("libfftw3-3.dll",
+             EntryPoint = "fftw_export_wisdom_to_filename",
+             ExactSpelling = true,
+             CallingConvention = CallingConvention.Cdecl)]
+        public static extern void export_wisdom_to_filename(string filename);
+
+
+        /// <summary>
+        /// Imports Wisdom from provided filename
+        /// </summary>
+        /// <param name="filename">The filename to read from</param>
+        [DllImport("libfftw3-3.dll",
+             EntryPoint = "fftw_import_wisdom_from_filename",
+             ExactSpelling = true,
+             CallingConvention = CallingConvention.Cdecl)]
+        public static extern void import_wisdom_from_filename(string filename);
+    }
 	#endregion
 }
