@@ -136,6 +136,7 @@ namespace FFTWSharp_test
         // Releases all memory used by FFTW/C#
         ~FFTWtest()
         {
+            fftwf.export_wisdom_to_filename("wisdom.wsd");
             // it is essential that you call these after finishing
             // that's why they're in the destructor. See Also: RAII
             fftwf.free(pin);
@@ -151,8 +152,10 @@ namespace FFTWSharp_test
 
         static void Main(string[] args)
         {
+            fftwf.import_wisdom_from_filename("wisdom.wsd");
+
             // initialize our FFTW test class
-            FFTWtest test = new FFTWtest(16384);
+            FFTWtest test = new FFTWtest(16384); 
 
             // run the tests, print debug output
             test.TestAll();
