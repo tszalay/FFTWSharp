@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("FFTW Library .NET wrapper")]
-[assembly: AssemblyDescription(".NET wrapper class for .NET")]
+[assembly: AssemblyDescription("FFTW .NET wrapper class")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Tamas Szalay")]
 [assembly: AssemblyProduct("FFTW Library .NET wrapper")]
