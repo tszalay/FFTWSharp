@@ -482,14 +482,23 @@ namespace FFTWSharp
              ExactSpelling = true,
              CallingConvention = CallingConvention.Cdecl)]
         public static extern void import_wisdom_from_filename(string filename);
-    }
-	#endregion
 
-	#region Double Precision
-	/// <summary>
-	/// Contains the Basic Interface FFTW functions for double-precision (double) operations
-	/// </summary>
-	public class fftw
+        /// <summary>
+        /// Forgets the Wisdom
+        /// </summary>
+        [DllImport("libfftw3f-3.dll",
+             EntryPoint = "fftwf_forget_wisdom",
+             ExactSpelling = true,
+             CallingConvention = CallingConvention.Cdecl)]
+        public static extern void fftwf_forget_wisdom();
+    }
+    #endregion
+
+    #region Double Precision
+    /// <summary>
+    /// Contains the Basic Interface FFTW functions for double-precision (double) operations
+    /// </summary>
+    public class fftw
 	{
 		/// <summary>
 		/// Allocates FFTW-optimized unmanaged memory
@@ -850,6 +859,15 @@ namespace FFTWSharp
              ExactSpelling = true,
              CallingConvention = CallingConvention.Cdecl)]
         public static extern void import_wisdom_from_filename(string filename);
+
+        /// <summary>
+        /// Forgets the Wisdom
+        /// </summary>
+        [DllImport("libfftw3-3.dll",
+             EntryPoint = "fftw_forget_wisdom",
+             ExactSpelling = true,
+             CallingConvention = CallingConvention.Cdecl)]
+        public static extern void fftw_forget_wisdom();
     }
-	#endregion
+    #endregion
 }
