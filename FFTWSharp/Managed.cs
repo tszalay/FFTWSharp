@@ -28,7 +28,7 @@ namespace FFTWSharp
     /// <summary>
     /// To simplify FFTW memory management
     /// </summary>
-    public abstract class fftwf_complexarray
+    public class fftwf_complexarray
     {
         private IntPtr handle;
         public IntPtr Handle
@@ -74,7 +74,7 @@ namespace FFTWSharp
         }
 
         /// <summary>
-        /// Set the data to an array of complex numbers
+        /// Set the data to an array of complex numbers (real + imaginary floats following eachother)
         /// </summary>
         public void SetData(float[] data)
         {
@@ -130,7 +130,7 @@ namespace FFTWSharp
         }
 
         /// <summary>
-        /// Get the real elements out
+        /// Get the real elements out (imaginary parts are discarded)
         /// </summary>
         public float[] GetData_Real()
         {
@@ -149,7 +149,7 @@ namespace FFTWSharp
         /// <summary>
         /// Get the full array of floats out (alternating real and imaginary)
         /// </summary>
-        public float[] GetData_float()
+        public float[] GetData_Float()
         {
             float[] dataf = new float[length * 2];
             Marshal.Copy(handle, dataf, 0, length * 2);
@@ -479,7 +479,7 @@ namespace FFTWSharp
         /// Get the data out
         /// </summary>
         /// <returns></returns>
-        public double[] GetData_double()
+        public double[] GetData_Double()
         {
             double[] datad = new double[length * 2];
             Marshal.Copy(handle, datad, 0, length * 2);
