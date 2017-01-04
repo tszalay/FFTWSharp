@@ -6,6 +6,10 @@ namespace FFTWSharp_test
 {
     public class FFTWtest
     {
+        const int sampleSize = 16384;
+        const int repeatPlan = 10000;
+        const bool forgetWisdom = false;
+
         //pointers to unmanaged arrays
         IntPtr pin, pout;
 
@@ -20,8 +24,10 @@ namespace FFTWSharp_test
         IntPtr fplan1, fplan2, fplan3, fplan4, fplan5;
 
         // and an example of the managed interface
-        fftw_plan mplan;
-        fftw_complexarray min, mout;
+        fftwf_plan mplan1, mplan2, mplan3, mplan4;
+        fftwf_complexarray mfin, mfout;
+        fftw_plan mplan5;
+        fftw_complexarray mdin, mdout;
 
         // length of arrays
         int fftLength = 0;
@@ -30,7 +36,8 @@ namespace FFTWSharp_test
         // n: Logical size of the transform
         public FFTWtest(int n)
         {
-            System.Console.WriteLine("Starting test with n = " + n + " complex numbers");
+            Console.WriteLine($"Start testing with n = {n.ToString("#,0")} complex numbers. All plans will be executed {repeatPlan.ToString("#,0")} times on a single thread.");
+            Console.WriteLine("Please wait, creating plans...");
             fftLength = n;
 
             // create two unmanaged arrays, properly aligned
@@ -53,46 +60,50 @@ namespace FFTWSharp_test
 
             // create a few test transforms
             fplan1 = fftwf.dft_1d(n, pin, pout, fftw_direction.Forward, fftw_flags.Estimate);
-            fplan2 = fftwf.dft_1d(n, hin.AddrOfPinnedObject(), hout.AddrOfPinnedObject(),
-                fftw_direction.Forward, fftw_flags.Estimate);
-            fplan3 = fftwf.dft_1d(n, hout.AddrOfPinnedObject(), pin,
-                fftw_direction.Backward, fftw_flags.Measure);
+            fplan2 = fftwf.dft_1d(n, hin.AddrOfPinnedObject(), hout.AddrOfPinnedObject(), fftw_direction.Forward, fftw_flags.Estimate);
+            fplan3 = fftwf.dft_1d(n, hout.AddrOfPinnedObject(), pin, fftw_direction.Backward, fftw_flags.Measure);
             // end with transforming back to original array
-            fplan4 = fftwf.dft_1d(n, hout.AddrOfPinnedObject(), hin.AddrOfPinnedObject(),
-                fftw_direction.Backward, fftw_flags.Estimate);
+            fplan4 = fftwf.dft_1d(n, hout.AddrOfPinnedObject(), hin.AddrOfPinnedObject(), fftw_direction.Backward, fftw_flags.Estimate);
             // and check a quick one with doubles, just to be sure
-            fplan5 = fftw.dft_1d(n, hdin.AddrOfPinnedObject(), hdout.AddrOfPinnedObject(),
-                fftw_direction.Backward, fftw_flags.Measure);
+            fplan5 = fftw.dft_1d(n, hdin.AddrOfPinnedObject(), hdout.AddrOfPinnedObject(), fftw_direction.Backward, fftw_flags.Measure);
 
             // create a managed plan as well
-            min = new fftw_complexarray(din);
-            mout = new fftw_complexarray(dout);
-            mplan = fftw_plan.dft_1d(n, min, mout, fftw_direction.Forward, fftw_flags.Estimate);
+            mfin = new fftwf_complexarray(fin);
+            mfout = new fftwf_complexarray(fout);
+            mdin = new fftw_complexarray(din);
+            mdout = new fftw_complexarray(dout);
+
+            mplan1 = fftwf_plan.dft_1d(n, mfin, mfout, fftw_direction.Forward, fftw_flags.Estimate);
+            mplan2 = fftwf_plan.dft_1d(n, mfin, mfout, fftw_direction.Forward, fftw_flags.Measure);
+            mplan3 = fftwf_plan.dft_1d(n, mfin, mfout, fftw_direction.Forward, fftw_flags.Patient);
+
+            mplan4 = fftwf_plan.dft_1d(n, mfout, mfin, fftw_direction.Backward, fftw_flags.Measure);
+            
+            mplan5 = fftw_plan.dft_1d(n, mdin, mdout, fftw_direction.Forward, fftw_flags.Measure);
+
 
             // fill our arrays with an arbitrary complex sawtooth-like signal
-            for (int i = 0; i < n * 2; i++)
-                fin[i] = i % 50;
-            for (int i = 0; i < n * 2; i++)
-                fout[i] = i % 50;
-            for (int i = 0; i < n * 2; i++)
-                din[i] = i % 50;
+            for (int i = 0; i < n * 2; i++) fin[i] = i % 50;
+            for (int i = 0; i < n * 2; i++) fout[i] = i % 50;
+            for (int i = 0; i < n * 2; i++) din[i] = i % 50;
 
             // copy managed arrays to unmanaged arrays
             Marshal.Copy(fin, 0, pin, n * 2);
             Marshal.Copy(fout, 0, pout, n * 2);
+
+            Console.WriteLine();
         }
 
         public void TestAll()
         {
-            System.Console.WriteLine("Testing single precision:\n");
-            TestPlan(fplan1);
-            TestPlan(fplan2);
-            TestPlan(fplan3);
-            // set fin to 0, and try to refill it from a backwards fft from fout (aka hin/hout)
-            for (int i = 0; i < fftLength * 2; i++)
-                fin[i] = 0;
+            TestPlan(fplan1, "single (malloc) | pin,  pout,  Forward,  Estimate");
+            TestPlan(fplan2, "single (pinned) | hin,  hout,  Forward,  Estimate");
+            TestPlan(fplan3, "single (pinned) | hout, pin,   Backward, Measure ");
 
-            TestPlan(fplan4);
+            // set fin to 0, and try to refill it from a backwards fft from fout (aka hin/hout)
+            for (int i = 0; i < fftLength * 2; i++) fin[i] = 0;
+
+            TestPlan(fplan4, "single (pinned) | hout, hin,   Backward, Estimate");
 
             // check and see how we did, don't say anyt
             for (int i = 0; i < fftLength * 2; i++)
@@ -106,37 +117,108 @@ namespace FFTWSharp_test
                 }
             }
 
-            System.Console.WriteLine("FFT consistency check ok.\n\nTesting double precision:\n");
+            TestPlan(fplan5, "double (pinned) | hdin, hdout, Backward, Measure ");
 
-            TestPlan(fplan5);
 
-            System.Console.WriteLine("Testing managed interface:\n");
+            Console.WriteLine();
+            TestPlan(mplan1, "#1 single (managed) | mfin, mfout, Forward,  Estimate");
+            TestPlan(mplan2, "#2 single (managed) | mfin, mfout, Forward,  Measure ");
+            TestPlan(mplan3, "#3 single (managed) | mfin, mfout, Forward,  Patient ");
+            Console.WriteLine();
 
-            mplan.Execute();
+            // fill our input array with an arbitrary complex sawtooth-like signal
+            for (int i = 0; i < fftLength * 2; i++) fin[i] = i % 50;
+            for (int i = 0; i < fftLength * 2; i++) fout[i] = 0;
 
-            // yeah alright so this was kind of a trivial test and of course it's gonna work. but still.
-            System.Console.WriteLine("Ok.");
+            mfin.SetData(fin);
+            mfout.SetData(fout);
+            TestPlan(mplan2, "#2 single (managed) | mfin, mfout, Forward,  Measure ");
+
+            fout = mfout.GetData_Float();  // let's see what's in mfout
+                                           // at this point mfout contains the FFT'd mfin
+
+            TestPlan(mplan4, "#4 single (managed) | mfout, mfin, Backward, Measure ");
+            // at this point we have transfarred backwards the mfout into mfin, so mfin should be very close to the original complex sawtooth-like signal
+
+            fin = mfin.GetData_Float();
+            for (int i = 0; i < fftLength * 2; i++) fin[i] /= fftLength;
+            // at this point fin should be very close to the original (sawtooth-like) signal
+
+            // check and see how we did, don't say anyt
+            for (int i = 0; i < fftLength * 2; i++)
+            {
+                // check against original values
+                if (System.Math.Abs(fin[i] - (i % 50)) > 1e-3)
+                {
+                    System.Console.WriteLine("FFTW consistency error!");
+                    return;
+                }
+            }
+
+            Console.WriteLine();
+
+            TestPlan(mplan2, "#2 single (managed) | mfin, mfout, Forward,  Measure ");
+            TestPlan(mplan5, "#5 double (managed) | mdin, mdout, Forward,  Measure ");
+            Console.WriteLine();
         }
 
         // Tests a single plan, displaying results
         // plan: Pointer to plan to test
-        public void TestPlan(IntPtr plan)
+        public void TestPlan(object plan, string planName)
         {
-            int start = System.Environment.TickCount;
-            for (int i = 0; i < 1000; i++)
-                fftwf.execute(plan);
-            Console.WriteLine("Time per plan: {0} us",
-                (System.Environment.TickCount - start));
             // a: adds, b: muls, c: fmas
             double a = 0, b = 0, c = 0;
-            fftwf.flops(plan, ref a, ref b, ref c);
-            Console.WriteLine("Approx. flops: {0}\n", (a + b + 2 * c));
+
+            int start = System.Environment.TickCount;
+
+            if (plan is IntPtr)
+            {
+                IntPtr umplan = (IntPtr)plan;
+
+                for (int i = 0; i < repeatPlan; i++)
+                {
+                        fftwf.execute(umplan);
+                }
+
+                fftwf.flops(umplan, ref a, ref b, ref c);
+            }
+
+            if (plan is fftw_plan)
+            {
+                fftw_plan mplan = (fftw_plan)plan;
+
+                for (int i = 0; i < repeatPlan; i++)
+                {
+                    mplan.Execute();
+                }
+
+                fftw.flops(mplan.Handle, ref a, ref b, ref c);
+            }
+
+            if (plan is fftwf_plan)
+            {
+                fftwf_plan mplan = (fftwf_plan)plan;
+
+                for (int i = 0; i < repeatPlan; i++)
+                {
+                    mplan.Execute();
+                }
+
+                fftwf.flops(mplan.Handle, ref a, ref b, ref c);
+            }
+
+            double mflops = (((a + b + 2 * c)) * repeatPlan) / (1024 * 1024);
+            long ticks = (System.Environment.TickCount - start);
+
+            //Console.WriteLine($"Plan '{planName}': {ticks.ToString("#,0")} us | mflops: {FormatNumber(mflops)} | mflops/s: {(1000*mflops/ticks).ToString("#,0.0")}");
+            Console.WriteLine("Plan '{0}': {1,8:N0} us | mflops: {2,8:N0} | mflops/s: {3,8:N0}", planName, ticks, mflops, (1000 * mflops / ticks));
         }
 
         // Releases all memory used by FFTW/C#
         ~FFTWtest()
         {
             fftwf.export_wisdom_to_filename("wisdom.wsd");
+
             // it is essential that you call these after finishing
             // that's why they're in the destructor. See Also: RAII
             fftwf.free(pin);
@@ -152,10 +234,18 @@ namespace FFTWSharp_test
 
         static void Main(string[] args)
         {
-            fftwf.import_wisdom_from_filename("wisdom.wsd");
+            if (forgetWisdom)
+            {
+                fftwf.fftwf_forget_wisdom();
+            }
+            else
+            {
+                Console.WriteLine("Importing wisdom (wisdom speeds up the plan creation process, if that plan was previously created at least once)");
+                fftwf.import_wisdom_from_filename("wisdom.wsd");
+            }
 
             // initialize our FFTW test class
-            FFTWtest test = new FFTWtest(16384); 
+            FFTWtest test = new FFTWtest(sampleSize); 
 
             // run the tests, print debug output
             test.TestAll();
